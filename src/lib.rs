@@ -9,6 +9,55 @@ pub enum RangeOrdering {
 }
 
 // suggestion from @benschulz https://internals.rust-lang.org/t/implement-rangebounds-for-range/19704/3
+/// Helper trait to allow passing a range as either a owned value or a reference.
+///
+/// For instance:
+///
+/// ```
+/// use std::ops::RangeBounds;
+/// use range_cmp::BorrowRange;
+/// fn f<T, R: RangeBounds<T>, B: BorrowRange<T, R>>(range: B) {
+///     let range = range.borrow();
+///     // ...
+/// }
+/// ```
+///
+/// With concrete type such as [`i32`], this would be achieved by taking a generic type `T` with the
+/// bound `T: Bound<i32>`. So we might be tempted to do the same with the
+/// [`RangeBounds`](std::ops::RangeBounds) trait:
+///
+/// ```
+/// use std::borrow::Borrow;
+/// use std::ops::RangeBounds;
+/// fn f<R: RangeBounds<i32>, B: Borrow<R>>(range: B) {
+///     let range = range.borrow();
+///     // ...
+/// }
+/// f(0..42)
+/// ```
+///
+/// However, this fails to compile when passing a reference:
+///
+/// ```compile_fail,E0282
+/// # use std::borrow::Borrow;
+/// # use std::ops::RangeBounds;
+/// # fn f<R: RangeBounds<i32>, B: Borrow<R>>(range: B) {
+/// #     let range = range.borrow();
+/// #     // ...
+/// # }
+/// f(&(0..42))
+/// ```
+///
+/// The compilation output is:
+///
+/// ```shell
+///   | f(&(0..42))
+///   | ^ cannot infer type of the type parameter `R` declared on the function `f`
+/// ```
+///
+/// Indeed, although we understand we want to pass a [`Range`](std::ops::Range)`<`[`i32`]`>` by
+/// reference, the compiler need to assume that other types could yield a
+/// `&`[`Range`](std::ops::Range)`<`[`i32`]`>` when borrowed.
 pub trait BorrowRange<T: ?Sized, R>: Borrow<R> {}
 impl<T, R: RangeBounds<T>> BorrowRange<T, R> for R {}
 impl<T, R: RangeBounds<T>> BorrowRange<T, R> for &R {}

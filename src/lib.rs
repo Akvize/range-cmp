@@ -66,7 +66,19 @@ pub trait BorrowRange<T: ?Sized, R>: Borrow<R> {}
 impl<T, R: RangeBounds<T>> BorrowRange<T, R> for R {}
 impl<T, R: RangeBounds<T>> BorrowRange<T, R> for &R {}
 
+/// Trait to provide the [`range_cmp`](RangeComparable::range_cmp) method, which allows comparing
+/// the type to a range. A blanket implementation is provided for all types that implement the
+/// [`PartialOrd`] trait.
 pub trait RangeComparable {
+    /// Compare the value to a range of values. Returns whether the value is below, inside or above
+    /// the range.
+    ///
+    /// ```
+    /// use range_cmp::{RangeComparable, RangeOrdering};
+    /// assert_eq!(15.range_cmp(20..30), RangeOrdering::Below);
+    /// assert_eq!(25.range_cmp(20..30), RangeOrdering::Inside);
+    /// assert_eq!(35.range_cmp(20..30), RangeOrdering::Above);
+    /// ```
     fn range_cmp<R: RangeBounds<Self>, B: BorrowRange<Self, R>>(&self, range: B) -> RangeOrdering;
 }
 

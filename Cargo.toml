@@ -5,5 +5,9 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Trait that allows comparing a value to a range of values"
 repository = "https://github.com/Akvize/range-cmp"
+exclude = [
+    "pre-commit",
+    "CONTRIBUTING.md",
+]
 
 [dependencies]

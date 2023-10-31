@@ -74,7 +74,7 @@ mod tests {
         // 1 is inside [1, 2[
         assert_eq!(1.range_cmp(&(1..2)), RangeOrdering::Inside);
         assert_eq!(1.range_cmp(&(&1..&2)), RangeOrdering::Inside);
-        
+
         // 1 is below [2, 3[
         assert_eq!(1.range_cmp(&(2..3)), RangeOrdering::Below);
         assert_eq!(1.range_cmp(&(&2..&3)), RangeOrdering::Below);
@@ -171,7 +171,6 @@ mod tests {
         assert_eq!(1.range_cmp(&bounds), RangeOrdering::Below);
     }
 
-    
     #[test]
     fn bounds_inclusive() {
         // 1 is above [0, 0]
@@ -196,7 +195,6 @@ mod tests {
         assert_eq!(1.range_cmp(&bounds), RangeOrdering::Below);
     }
 
-    
     #[test]
     fn bounds_to_inclusive() {
         // 1 is above ]-inf, 0]
@@ -216,7 +214,6 @@ mod tests {
 
     #[test]
     fn bounds_exclusive_inclusive() {
-        
         // 1 is above ]-1, 0]
         let bounds: (Bound<i32>, Bound<i32>) = (Bound::Excluded(-1), Bound::Included(0));
         assert_eq!(1.range_cmp(&bounds), RangeOrdering::Above);
@@ -237,6 +234,5 @@ mod tests {
 
         let bounds: (Bound<&i32>, Bound<&i32>) = (Bound::Excluded(&1), Bound::Included(&2));
         assert_eq!(1.range_cmp(&bounds), RangeOrdering::Below);
-
     }
 }

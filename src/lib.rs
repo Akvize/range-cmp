@@ -46,7 +46,7 @@ pub enum RangeOrdering {
 /// ```
 ///
 /// With concrete type such as [`i32`], this would be achieved by taking a generic type `T` with
-/// the bound `T: Bound<i32>`. So we might be tempted to do the same with the [`RangeBounds`]
+/// the bound `T: Borrow<i32>`. So we might be tempted to do the same with the [`RangeBounds`]
 /// trait:
 ///
 /// ```

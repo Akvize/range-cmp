@@ -1,7 +1,7 @@
 # range_cmp
 
 This Rust crate provides the `RangeComparable` trait on all types that
-implement `PartialOrd`. This traits exposes a `range_cmp` associated method
+implement `Ord`. This traits exposes a `range_cmp` associated method
 that allows comparing a value with a range of values:
 
 ```rust

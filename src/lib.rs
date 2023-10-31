@@ -6,7 +6,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! This crate provides the [`RangeComparable`] trait on all types that implement [`PartialOrd`].
+//! This crate provides the [`RangeComparable`] trait on all types that implement [`Ord`].
 //! This traits exposes a [`range_cmp`](RangeComparable::range_cmp) associated method that allows
 //! comparing a value with a range of values:
 //!
@@ -87,7 +87,7 @@ impl<T, R: RangeBounds<T>> BorrowRange<T, R> for &R {}
 
 /// Trait to provide the [`range_cmp`](RangeComparable::range_cmp) method, which allows comparing
 /// the type to a range. A blanket implementation is provided for all types that implement the
-/// [`PartialOrd`] trait.
+/// [`Ord`] trait.
 pub trait RangeComparable {
     /// Compare the value to a range of values. Returns whether the value is below, inside or above
     /// the range.
@@ -101,7 +101,7 @@ pub trait RangeComparable {
     fn range_cmp<R: RangeBounds<Self>, B: BorrowRange<Self, R>>(&self, range: B) -> RangeOrdering;
 }
 
-impl<T: PartialOrd> RangeComparable for T {
+impl<T: Ord> RangeComparable for T {
     fn range_cmp<R: RangeBounds<Self>, B: BorrowRange<Self, R>>(&self, range: B) -> RangeOrdering {
         let range = range.borrow();
         if match range.start_bound() {

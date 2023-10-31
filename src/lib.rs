@@ -37,9 +37,9 @@ pub enum RangeOrdering {
 /// }
 /// ```
 ///
-/// With concrete type such as [`i32`], this would be achieved by taking a generic type `T` with the
-/// bound `T: Bound<i32>`. So we might be tempted to do the same with the
-/// [`RangeBounds`](std::ops::RangeBounds) trait:
+/// With concrete type such as [`i32`], this would be achieved by taking a generic type `T` with
+/// the bound `T: Bound<i32>`. So we might be tempted to do the same with the [`RangeBounds`]
+/// trait:
 ///
 /// ```
 /// use std::borrow::Borrow;

@@ -8,13 +8,11 @@ pub enum RangeOrdering {
 }
 
 pub trait RangeComparable {
-    type T: PartialOrd;
-    fn range_cmp<R: RangeBounds<Self::T>>(&self, range: &R) -> RangeOrdering;
+    fn range_cmp<R: RangeBounds<Self>>(&self, range: &R) -> RangeOrdering;
 }
 
 impl<T: PartialOrd> RangeComparable for T {
-    type T = T;
-    fn range_cmp<R: RangeBounds<T>>(&self, range: &R) -> RangeOrdering {
+    fn range_cmp<R: RangeBounds<Self>>(&self, range: &R) -> RangeOrdering {
         if match range.start_bound() {
             Bound::Included(key) => self < key,
             Bound::Excluded(key) => self <= key,

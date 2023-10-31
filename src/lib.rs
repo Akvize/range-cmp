@@ -1,10 +1,14 @@
 use std::borrow::Borrow;
 use std::ops::{Bound, RangeBounds};
 
+/// Return type for [`RangeComparable::range_cmp`].
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum RangeOrdering {
+    /// The value is below (all) the range. For instance, `-1` is below the range `0..42`.
     Below,
+    /// The value is contained inside the range. For instance, `34` is inside the range `0..42`.
     Inside,
+    /// The value is above (all) the range. For instance, `314` is above the range `0..42`.
     Above,
 }
 

@@ -7,20 +7,20 @@
 // except according to those terms.
 
 //! This crate provides the [`RangeComparable`] trait on all types that implement [`Ord`].
-//! This traits exposes a [`range_cmp`](RangeComparable::range_cmp) associated method that allows
+//! This traits exposes a [`rcmp`](RangeComparable::rcmp) associated method that allows
 //! comparing a value with a range of values:
 //!
 //! ```
 //! use range_cmp::{RangeComparable, RangeOrdering};
-//! assert_eq!(15.range_cmp(20..30), RangeOrdering::Below);
-//! assert_eq!(25.range_cmp(20..30), RangeOrdering::Inside);
-//! assert_eq!(35.range_cmp(20..30), RangeOrdering::Above);
+//! assert_eq!(15.rcmp(20..30), RangeOrdering::Below);
+//! assert_eq!(25.rcmp(20..30), RangeOrdering::Inside);
+//! assert_eq!(35.rcmp(20..30), RangeOrdering::Above);
 //! ```
 
 use std::borrow::Borrow;
 use std::ops::{Bound, RangeBounds};
 
-/// Return type for [`RangeComparable::range_cmp`].
+/// Return type for [`RangeComparable::rcmp`].
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum RangeOrdering {
     /// The value is below (all) the range. For instance, `-1` is below the range `0..42`.
@@ -85,7 +85,7 @@ pub trait BorrowRange<T: ?Sized, R>: Borrow<R> {}
 impl<T, R: RangeBounds<T>> BorrowRange<T, R> for R {}
 impl<T, R: RangeBounds<T>> BorrowRange<T, R> for &R {}
 
-/// Trait to provide the [`range_cmp`](RangeComparable::range_cmp) method, which allows comparing
+/// Trait to provide the [`rcmp`](RangeComparable::rcmp) method, which allows comparing
 /// the type to a range. A blanket implementation is provided for all types that implement the
 /// [`Ord`] trait.
 pub trait RangeComparable {
@@ -94,15 +94,15 @@ pub trait RangeComparable {
     ///
     /// ```
     /// use range_cmp::{RangeComparable, RangeOrdering};
-    /// assert_eq!(15.range_cmp(20..30), RangeOrdering::Below);
-    /// assert_eq!(25.range_cmp(20..30), RangeOrdering::Inside);
-    /// assert_eq!(35.range_cmp(20..30), RangeOrdering::Above);
+    /// assert_eq!(15.rcmp(20..30), RangeOrdering::Below);
+    /// assert_eq!(25.rcmp(20..30), RangeOrdering::Inside);
+    /// assert_eq!(35.rcmp(20..30), RangeOrdering::Above);
     /// ```
-    fn range_cmp<R: RangeBounds<Self>, B: BorrowRange<Self, R>>(&self, range: B) -> RangeOrdering;
+    fn rcmp<R: RangeBounds<Self>, B: BorrowRange<Self, R>>(&self, range: B) -> RangeOrdering;
 }
 
 impl<T: Ord> RangeComparable for T {
-    fn range_cmp<R: RangeBounds<Self>, B: BorrowRange<Self, R>>(&self, range: B) -> RangeOrdering {
+    fn rcmp<R: RangeBounds<Self>, B: BorrowRange<Self, R>>(&self, range: B) -> RangeOrdering {
         let range = range.borrow();
 
         if range.contains(self) {
@@ -136,225 +136,225 @@ mod tests {
     #[test]
     fn range_full() {
         // 1 is inside ]-inf, inf[
-        assert_eq!(1.range_cmp(..), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(..), RangeOrdering::Inside);
     }
 
     #[test]
     fn range_from() {
         // 1 is inside [1, +inf[
-        assert_eq!(1.range_cmp(1..), RangeOrdering::Inside);
-        assert_eq!(1.range_cmp(&1..), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(1..), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(&1..), RangeOrdering::Inside);
 
         // 1 is below [2, +inf[
-        assert_eq!(1.range_cmp(2..), RangeOrdering::Below);
-        assert_eq!(1.range_cmp(&2..), RangeOrdering::Below);
+        assert_eq!(1.rcmp(2..), RangeOrdering::Below);
+        assert_eq!(1.rcmp(&2..), RangeOrdering::Below);
     }
 
     #[test]
     fn range_to() {
         // 1 is above ]-inf, 1[
-        assert_eq!(1.range_cmp(..1), RangeOrdering::Above);
-        assert_eq!(1.range_cmp(..&1), RangeOrdering::Above);
+        assert_eq!(1.rcmp(..1), RangeOrdering::Above);
+        assert_eq!(1.rcmp(..&1), RangeOrdering::Above);
 
         // 1 is inside ]-inf, 2[
-        assert_eq!(1.range_cmp(..2), RangeOrdering::Inside);
-        assert_eq!(1.range_cmp(..&2), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(..2), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(..&2), RangeOrdering::Inside);
     }
 
     #[test]
     fn range() {
         // 1 is above [0, 1[
-        assert_eq!(1.range_cmp(0..1), RangeOrdering::Above);
-        assert_eq!(1.range_cmp(&0..&1), RangeOrdering::Above);
+        assert_eq!(1.rcmp(0..1), RangeOrdering::Above);
+        assert_eq!(1.rcmp(&0..&1), RangeOrdering::Above);
 
         // 1 is inside [1, 2[
-        assert_eq!(1.range_cmp(1..2), RangeOrdering::Inside);
-        assert_eq!(1.range_cmp(&1..&2), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(1..2), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(&1..&2), RangeOrdering::Inside);
 
         // 1 is below [2, 3[
-        assert_eq!(1.range_cmp(2..3), RangeOrdering::Below);
-        assert_eq!(1.range_cmp(&2..&3), RangeOrdering::Below);
+        assert_eq!(1.rcmp(2..3), RangeOrdering::Below);
+        assert_eq!(1.rcmp(&2..&3), RangeOrdering::Below);
     }
 
     #[test]
     fn range_inclusive() {
         // 1 is above [0, 0]
-        assert_eq!(1.range_cmp(0..=0), RangeOrdering::Above);
-        assert_eq!(1.range_cmp(&0..=&0), RangeOrdering::Above);
+        assert_eq!(1.rcmp(0..=0), RangeOrdering::Above);
+        assert_eq!(1.rcmp(&0..=&0), RangeOrdering::Above);
 
         // 1 is inside [1, 1]
-        assert_eq!(1.range_cmp(1..=1), RangeOrdering::Inside);
-        assert_eq!(1.range_cmp(&1..=&1), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(1..=1), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(&1..=&1), RangeOrdering::Inside);
 
         // 1 is below [2, 2]
-        assert_eq!(1.range_cmp(2..=2), RangeOrdering::Below);
-        assert_eq!(1.range_cmp(&2..=&2), RangeOrdering::Below);
+        assert_eq!(1.rcmp(2..=2), RangeOrdering::Below);
+        assert_eq!(1.rcmp(&2..=&2), RangeOrdering::Below);
     }
 
     #[test]
     fn range_to_inclusive() {
         // 1 is above ]-inf, 0]
-        assert_eq!(1.range_cmp(..=0), RangeOrdering::Above);
-        assert_eq!(1.range_cmp(..=&0), RangeOrdering::Above);
+        assert_eq!(1.rcmp(..=0), RangeOrdering::Above);
+        assert_eq!(1.rcmp(..=&0), RangeOrdering::Above);
 
         // 1 is inside ]-inf, 1
-        assert_eq!(1.range_cmp(..=1), RangeOrdering::Inside);
-        assert_eq!(1.range_cmp(..=&1), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(..=1), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(..=&1), RangeOrdering::Inside);
     }
 
     #[test]
     fn bounds_full() {
         // 1 is inside ]-inf, inf[
         let bounds: (Bound<i32>, Bound<i32>) = (Bound::Unbounded, Bound::Unbounded);
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Inside);
     }
 
     #[test]
     fn bounds_from() {
         // 1 is inside [1, +inf[
         let bounds = (Bound::Included(1), Bound::Unbounded);
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Inside);
 
         let bounds = (Bound::Included(&1), Bound::Unbounded);
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Inside);
 
         // 1 is below [2, +inf[
         let bounds = (Bound::Included(2), Bound::Unbounded);
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Below);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Below);
 
         let bounds = (Bound::Included(&2), Bound::Unbounded);
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Below);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Below);
     }
 
     #[test]
     fn bounds_to() {
         // 1 is above ]-inf, 1[
         let bounds = (Bound::Unbounded, Bound::Excluded(1));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Above);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Above);
 
         let bounds = (Bound::Unbounded, Bound::Excluded(&1));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Above);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Above);
 
         // 1 is inside ]-inf, 2[
         let bounds = (Bound::Unbounded, Bound::Excluded(2));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Inside);
 
         let bounds = (Bound::Unbounded, Bound::Excluded(&2));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Inside);
     }
 
     #[test]
     fn bounds() {
         // 1 is above [0, 1[
         let bounds = (Bound::Included(0), Bound::Excluded(1));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Above);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Above);
 
         let bounds = (Bound::Included(&0), Bound::Excluded(&1));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Above);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Above);
 
         // 1 is inside [1, 2[
         let bounds = (Bound::Included(1), Bound::Excluded(2));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Inside);
 
         let bounds = (Bound::Included(&1), Bound::Excluded(&2));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Inside);
 
         // 1 is below [2, 3[
         let bounds = (Bound::Included(2), Bound::Excluded(3));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Below);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Below);
 
         let bounds = (Bound::Included(&2), Bound::Excluded(&3));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Below);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Below);
     }
 
     #[test]
     fn bounds_inclusive() {
         // 1 is above [0, 0]
         let bounds = (Bound::Included(0), Bound::Included(0));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Above);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Above);
 
         let bounds = (Bound::Included(&0), Bound::Included(&0));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Above);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Above);
 
         // 1 is inside [1, 1]
         let bounds = (Bound::Included(1), Bound::Included(1));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Inside);
 
         let bounds = (Bound::Included(&1), Bound::Included(&1));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Inside);
 
         // 1 is below [2, 2]
         let bounds = (Bound::Included(2), Bound::Included(2));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Below);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Below);
 
         let bounds = (Bound::Included(&2), Bound::Included(&2));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Below);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Below);
     }
 
     #[test]
     fn bounds_to_inclusive() {
         // 1 is above ]-inf, 0]
         let bounds = (Bound::Unbounded, Bound::Included(0));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Above);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Above);
 
         let bounds = (Bound::Unbounded, Bound::Included(&0));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Above);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Above);
 
         // 1 is inside ]-inf, 1]
         let bounds = (Bound::Unbounded, Bound::Included(1));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Inside);
 
         let bounds = (Bound::Unbounded, Bound::Included(&1));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Inside);
     }
 
     #[test]
     fn bounds_exclusive_inclusive() {
         // 1 is above ]-1, 0]
         let bounds: (Bound<i32>, Bound<i32>) = (Bound::Excluded(-1), Bound::Included(0));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Above);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Above);
 
         let bounds: (Bound<&i32>, Bound<&i32>) = (Bound::Excluded(&-1), Bound::Included(&0));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Above);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Above);
 
         // 1 is inside ]0, 1]
         let bounds: (Bound<i32>, Bound<i32>) = (Bound::Excluded(0), Bound::Included(1));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Inside);
 
         let bounds: (Bound<&i32>, Bound<&i32>) = (Bound::Excluded(&0), Bound::Included(&1));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Inside);
 
         // 1 is below ]1, 2]
         let bounds: (Bound<i32>, Bound<i32>) = (Bound::Excluded(1), Bound::Included(2));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Below);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Below);
 
         let bounds: (Bound<&i32>, Bound<&i32>) = (Bound::Excluded(&1), Bound::Included(&2));
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Below);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Below);
     }
 
     #[test]
     fn bounds_as_reference() {
         let bounds = 0..2;
-        assert_eq!(1.range_cmp(&bounds), RangeOrdering::Inside);
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(&bounds), RangeOrdering::Inside);
+        assert_eq!(1.rcmp(bounds), RangeOrdering::Inside);
     }
 
     #[test]
     fn empty_ranges() {
         // 0 is above [0, 0[
-        assert_eq!(0.range_cmp(0..0), RangeOrdering::Above);
-        assert_eq!(0.range_cmp(&0..&0), RangeOrdering::Above);
+        assert_eq!(0.rcmp(0..0), RangeOrdering::Above);
+        assert_eq!(0.rcmp(&0..&0), RangeOrdering::Above);
 
         // 0u32 is above [-inf, 0u32[
-        assert_eq!(0.range_cmp(..0u32), RangeOrdering::Above);
-        assert_eq!(0.range_cmp(..&0u32), RangeOrdering::Above);
+        assert_eq!(0.rcmp(..0u32), RangeOrdering::Above);
+        assert_eq!(0.rcmp(..&0u32), RangeOrdering::Above);
 
         // 30 is below [45, 35[
-        assert_eq!(30.range_cmp(45..35), RangeOrdering::Below);
-        assert_eq!(30.range_cmp(&45..&35), RangeOrdering::Below);
+        assert_eq!(30.rcmp(45..35), RangeOrdering::Below);
+        assert_eq!(30.rcmp(&45..&35), RangeOrdering::Below);
 
         // 30 is above [25, 15[
-        assert_eq!(30.range_cmp(25..15), RangeOrdering::Above);
-        assert_eq!(30.range_cmp(&25..&15), RangeOrdering::Above);
+        assert_eq!(30.rcmp(25..15), RangeOrdering::Above);
+        assert_eq!(30.rcmp(&25..&15), RangeOrdering::Above);
     }
 }

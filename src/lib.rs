@@ -6,12 +6,12 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! This crate provides the [`RangeComparable`] trait on all types that implement [`Ord`].
-//! This traits exposes a [`rcmp`](RangeComparable::rcmp) associated method that allows
+//! This crate provides the [`RangeOrd`] trait on all types that implement [`Ord`].
+//! This traits exposes a [`rcmp`](RangeOrd::rcmp) associated method that allows
 //! comparing a value with a range of values:
 //!
 //! ```
-//! use range_cmp::{RangeComparable, RangeOrdering};
+//! use range_cmp::{RangeOrd, RangeOrdering};
 //! assert_eq!(15.rcmp(20..30), RangeOrdering::Below);
 //! assert_eq!(25.rcmp(20..30), RangeOrdering::Inside);
 //! assert_eq!(35.rcmp(20..30), RangeOrdering::Above);
@@ -20,7 +20,7 @@
 use std::borrow::Borrow;
 use std::ops::{Bound, RangeBounds};
 
-/// Return type for [`RangeComparable::rcmp`].
+/// Return type for [`RangeOrd::rcmp`].
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum RangeOrdering {
     /// The value is below (all) the range. For instance, `-1` is below the range `0..42`.
@@ -85,15 +85,15 @@ pub trait BorrowRange<T: ?Sized, R>: Borrow<R> {}
 impl<T, R: RangeBounds<T>> BorrowRange<T, R> for R {}
 impl<T, R: RangeBounds<T>> BorrowRange<T, R> for &R {}
 
-/// Trait to provide the [`rcmp`](RangeComparable::rcmp) method, which allows comparing
+/// Trait to provide the [`rcmp`](RangeOrd::rcmp) method, which allows comparing
 /// the type to a range. A blanket implementation is provided for all types that implement the
 /// [`Ord`] trait.
-pub trait RangeComparable {
+pub trait RangeOrd {
     /// Compare the value to a range of values. Returns whether the value is below, inside or above
     /// the range.
     ///
     /// ```
-    /// use range_cmp::{RangeComparable, RangeOrdering};
+    /// use range_cmp::{RangeOrd, RangeOrdering};
     /// assert_eq!(15.rcmp(20..30), RangeOrdering::Below);
     /// assert_eq!(25.rcmp(20..30), RangeOrdering::Inside);
     /// assert_eq!(35.rcmp(20..30), RangeOrdering::Above);
@@ -101,7 +101,7 @@ pub trait RangeComparable {
     fn rcmp<R: RangeBounds<Self>, B: BorrowRange<Self, R>>(&self, range: B) -> RangeOrdering;
 }
 
-impl<T: Ord> RangeComparable for T {
+impl<T: Ord> RangeOrd for T {
     fn rcmp<R: RangeBounds<Self>, B: BorrowRange<Self, R>>(&self, range: B) -> RangeOrdering {
         let range = range.borrow();
 

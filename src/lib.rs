@@ -110,6 +110,11 @@ impl<T: Ord> RangeComparable for T {
         range: B,
     ) -> Option<RangeOrdering> {
         let range = range.borrow();
+
+        if is_empty(range) {
+            return None;
+        }
+
         if match range.start_bound() {
             Bound::Included(key) => self < key,
             Bound::Excluded(key) => self <= key,
@@ -131,6 +136,24 @@ impl<T: Ord> RangeComparable for T {
         }
 
         None
+    }
+}
+
+// doesn't work for ..0u32
+fn is_empty<T: PartialOrd, R: RangeBounds<T>, B: BorrowRange<T, R>>(range: B) -> bool {
+    let range = range.borrow();
+    match range.start_bound() {
+        Bound::Included(s) => match range.end_bound() {
+            Bound::Included(e) => e < s,
+            Bound::Excluded(e) => e <= s,
+            _ => false,
+        },
+        Bound::Excluded(s) => match range.end_bound() {
+            Bound::Included(e) => e <= s,
+            Bound::Excluded(e) => e <= s,
+            _ => false,
+        },
+        _ => false,
     }
 }
 
@@ -389,5 +412,12 @@ mod tests {
         let bounds = 0..2;
         assert_eq!(1.range_cmp(&bounds), Some(RangeOrdering::Inside));
         assert_eq!(1.range_cmp(bounds), Some(RangeOrdering::Inside));
+    }
+
+    #[test]
+    fn range_is_empty() {
+        assert!(!is_empty::<i32, _, _>(..));
+
+        // TODO
     }
 }

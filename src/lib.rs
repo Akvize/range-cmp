@@ -338,4 +338,23 @@ mod tests {
         assert_eq!(1.range_cmp(&bounds), RangeOrdering::Inside);
         assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
     }
+
+    #[test]
+    fn empty_ranges() {
+        // 0 is above [0, 0[
+        assert_eq!(0.range_cmp(0..0), RangeOrdering::Above);
+        assert_eq!(0.range_cmp(&0..&0), RangeOrdering::Above);
+
+        // 0u32 is above [-inf, 0u32[
+        assert_eq!(0.range_cmp(..0u32), RangeOrdering::Above);
+        assert_eq!(0.range_cmp(..&0u32), RangeOrdering::Above);
+
+        // 30 is below [45, 35[
+        assert_eq!(30.range_cmp(45..35), RangeOrdering::Below);
+        assert_eq!(30.range_cmp(&45..&35), RangeOrdering::Below);
+
+        // 30 is above [25, 15[
+        assert_eq!(30.range_cmp(25..15), RangeOrdering::Above);
+        assert_eq!(30.range_cmp(&25..&15), RangeOrdering::Above);
+    }
 }

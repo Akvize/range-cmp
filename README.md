@@ -10,3 +10,15 @@ assert_eq!(15.range_cmp(20..30), RangeOrdering::Below);
 assert_eq!(25.range_cmp(20..30), RangeOrdering::Inside);
 assert_eq!(35.range_cmp(20..30), RangeOrdering::Above);
 ```
+## Empty ranges handling
+
+This crate _does not_ strictly handle empty ranges, 
+which are not mathematically comparable. In this case, 
+range_cmp will show different behavior depending on
+the representation of the empty range. For instance:
+
+```rust
+assert_eq!(30.range_cmp(45..35), RangeOrdering::Below);
+assert_eq!(30.range_cmp(25..15), RangeOrdering::Above);
+assert_eq!(0.range_cmp(0..0), RangeOrdering::Above);
+```

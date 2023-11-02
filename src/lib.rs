@@ -104,6 +104,11 @@ pub trait RangeComparable {
 impl<T: Ord> RangeComparable for T {
     fn range_cmp<R: RangeBounds<Self>, B: BorrowRange<Self, R>>(&self, range: B) -> RangeOrdering {
         let range = range.borrow();
+
+        if range.contains(self) {
+            return RangeOrdering::Inside;
+        }
+
         if match range.start_bound() {
             Bound::Included(key) => self < key,
             Bound::Excluded(key) => self <= key,
@@ -111,6 +116,7 @@ impl<T: Ord> RangeComparable for T {
         } {
             return RangeOrdering::Below;
         }
+
         if match range.end_bound() {
             Bound::Included(key) => self > key,
             Bound::Excluded(key) => self >= key,
@@ -118,7 +124,8 @@ impl<T: Ord> RangeComparable for T {
         } {
             return RangeOrdering::Above;
         }
-        RangeOrdering::Inside
+
+        unreachable!()
     }
 }
 

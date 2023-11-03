@@ -229,18 +229,18 @@ mod tests {
     #[test]
     fn bounds_to() {
         // 1 is above ]-inf, 1[
-        let bounds = (Bound::Included(1), Bound::Unbounded);
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
+        let bounds = (Bound::Unbounded, Bound::Excluded(1));
+        assert_eq!(1.range_cmp(bounds), RangeOrdering::Above);
 
-        let bounds = (Bound::Included(&1), Bound::Unbounded);
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
+        let bounds = (Bound::Unbounded, Bound::Excluded(&1));
+        assert_eq!(1.range_cmp(bounds), RangeOrdering::Above);
 
         // 1 is inside ]-inf, 2[
-        let bounds = (Bound::Included(2), Bound::Unbounded);
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Below);
+        let bounds = (Bound::Unbounded, Bound::Excluded(2));
+        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
 
-        let bounds = (Bound::Included(&2), Bound::Unbounded);
-        assert_eq!(1.range_cmp(bounds), RangeOrdering::Below);
+        let bounds = (Bound::Unbounded, Bound::Excluded(&2));
+        assert_eq!(1.range_cmp(bounds), RangeOrdering::Inside);
     }
 
     #[test]

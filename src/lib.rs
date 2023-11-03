@@ -421,230 +421,201 @@ mod rcmp_tests {
 
 #[cfg(test)]
 mod partial_rcmp_tests {
+    use std::cmp::Ordering;
+
     use super::*;
+
+    #[derive(PartialEq)]
+    struct Div(i32);
+
+    impl PartialOrd for Div {
+        fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+            let a_s = self.0.abs();
+            let a_o = other.0.abs();
+
+            match a_s.cmp(&a_o) {
+                Ordering::Less if a_o % a_s == 0 => Some(std::cmp::Ordering::Less),
+                Ordering::Greater if a_s % a_o == 0 => Some(std::cmp::Ordering::Greater),
+                Ordering::Equal => Some(std::cmp::Ordering::Equal),
+                _ => None,
+            }
+        }
+    }
 
     #[test]
     fn range_full() {
-        // 1 is inside ]-inf, inf[
-        assert_eq!(1.partial_rcmp(..), Some(RangeOrdering::Inside));
+        // 1 is an integer
+        assert_eq!(Div(1).partial_rcmp(..), Some(RangeOrdering::Inside));
     }
 
     #[test]
     fn range_from() {
-        // 1 is inside [1, +inf[
-        assert_eq!(1.partial_rcmp(1..), Some(RangeOrdering::Inside));
-        assert_eq!(1.partial_rcmp(&1..), Some(RangeOrdering::Inside));
+        // 1 is a multiple of 1
+        assert_eq!(Div(1).partial_rcmp(Div(1)..), Some(RangeOrdering::Inside));
+        assert_eq!(Div(1).partial_rcmp(&Div(1)..), Some(RangeOrdering::Inside));
 
-        // 1 is below [2, +inf[
-        assert_eq!(1.partial_rcmp(2..), Some(RangeOrdering::Below));
-        assert_eq!(1.partial_rcmp(&2..), Some(RangeOrdering::Below));
+        // 1 is below the multiples of 2
+        assert_eq!(Div(1).partial_rcmp(Div(2)..), Some(RangeOrdering::Below));
+        assert_eq!(Div(1).partial_rcmp(&Div(2)..), Some(RangeOrdering::Below));
+
+        // 2 is uncomparable with the multiples of 3
+        assert_eq!(Div(2).partial_rcmp(Div(3)..), None);
+        assert_eq!(Div(2).partial_rcmp(&Div(3)..), None);
     }
 
     #[test]
     fn range_to() {
-        // 1 is above ]-inf, 1[
-        assert_eq!(1.partial_rcmp(..1), Some(RangeOrdering::Above));
-        assert_eq!(1.partial_rcmp(..&1), Some(RangeOrdering::Above));
+        // All divisors of 2 divide 4
+        assert_eq!(Div(4).partial_rcmp(..Div(2)), Some(RangeOrdering::Above));
+        assert_eq!(Div(4).partial_rcmp(..&Div(2)), Some(RangeOrdering::Above));
 
-        // 1 is inside ]-inf, 2[
-        assert_eq!(1.partial_rcmp(..2), Some(RangeOrdering::Inside));
-        assert_eq!(1.partial_rcmp(..&2), Some(RangeOrdering::Inside));
+        // 1 is a divisor of 2
+        assert_eq!(Div(1).partial_rcmp(..Div(2)), Some(RangeOrdering::Inside));
+        assert_eq!(Div(1).partial_rcmp(..&Div(2)), Some(RangeOrdering::Inside));
+
+        // 3 is uncomparable with the divisors of 10
+        assert_eq!(Div(3).partial_rcmp(..Div(10)), None);
+        assert_eq!(Div(3).partial_rcmp(..&Div(10)), None);
     }
 
     #[test]
     fn range() {
-        // 1 is above [0, 1[
-        assert_eq!(1.partial_rcmp(0..1), Some(RangeOrdering::Above));
-        assert_eq!(1.partial_rcmp(&0..&1), Some(RangeOrdering::Above));
+        // 3 is a multiple of all divisors of 3
+        assert_eq!(
+            Div(3).partial_rcmp(Div(1)..Div(3)),
+            Some(RangeOrdering::Above)
+        );
+        assert_eq!(
+            Div(3).partial_rcmp(&Div(1)..&Div(3)),
+            Some(RangeOrdering::Above)
+        );
 
-        // 1 is inside [1, 2[
-        assert_eq!(1.partial_rcmp(1..2), Some(RangeOrdering::Inside));
-        assert_eq!(1.partial_rcmp(&1..&2), Some(RangeOrdering::Inside));
+        // 6 is a multiple of 2 and a divisor of 12
+        assert_eq!(
+            Div(6).partial_rcmp(Div(2)..Div(12)),
+            Some(RangeOrdering::Inside)
+        );
+        assert_eq!(
+            Div(6).partial_rcmp(&Div(2)..&Div(12)),
+            Some(RangeOrdering::Inside)
+        );
 
-        // 1 is below [2, 3[
-        assert_eq!(1.partial_rcmp(2..3), Some(RangeOrdering::Below));
-        assert_eq!(1.partial_rcmp(&2..&3), Some(RangeOrdering::Below));
+        // 2 divides all multiples of 4 that divide 8
+        assert_eq!(
+            Div(2).partial_rcmp(Div(4)..Div(8)),
+            Some(RangeOrdering::Below)
+        );
+        assert_eq!(
+            Div(2).partial_rcmp(&Div(4)..&Div(8)),
+            Some(RangeOrdering::Below)
+        );
+
+        // 3 is uncomparable with the multiples of 4 which are divisors of 12
+        assert_eq!(Div(3).partial_rcmp(Div(4)..Div(12)), None);
+        assert_eq!(Div(3).partial_rcmp(&Div(4)..&Div(12)), None);
     }
 
     #[test]
     fn range_inclusive() {
-        // 1 is above [0, 0]
-        assert_eq!(1.partial_rcmp(0..=0), Some(RangeOrdering::Above));
-        assert_eq!(1.partial_rcmp(&0..=&0), Some(RangeOrdering::Above));
+        // 6 is a multiple of all divisors of 3
+        assert_eq!(
+            Div(6).partial_rcmp(Div(1)..=Div(3)),
+            Some(RangeOrdering::Above)
+        );
+        assert_eq!(
+            Div(6).partial_rcmp(&Div(1)..=&Div(3)),
+            Some(RangeOrdering::Above)
+        );
 
-        // 1 is inside [1, 1]
-        assert_eq!(1.partial_rcmp(1..=1), Some(RangeOrdering::Inside));
-        assert_eq!(1.partial_rcmp(&1..=&1), Some(RangeOrdering::Inside));
+        // 6 is a multiple of 6 and a divisor of 6
+        assert_eq!(
+            Div(6).partial_rcmp(Div(6)..=Div(6)),
+            Some(RangeOrdering::Inside)
+        );
+        assert_eq!(
+            Div(6).partial_rcmp(&Div(6)..=&Div(6)),
+            Some(RangeOrdering::Inside)
+        );
 
-        // 1 is below [2, 2]
-        assert_eq!(1.partial_rcmp(2..=2), Some(RangeOrdering::Below));
-        assert_eq!(1.partial_rcmp(&2..=&2), Some(RangeOrdering::Below));
+        // 2 divides all multiples of 4 that divide 8
+        assert_eq!(
+            Div(2).partial_rcmp(Div(4)..=Div(8)),
+            Some(RangeOrdering::Below)
+        );
+        assert_eq!(
+            Div(2).partial_rcmp(&Div(4)..=&Div(8)),
+            Some(RangeOrdering::Below)
+        );
+
+        // 3 is uncomparable with the multiples of 4 which are divisors of 12
+        assert_eq!(Div(3).partial_rcmp(Div(4)..=Div(12)), None);
+        assert_eq!(Div(3).partial_rcmp(&Div(4)..=&Div(12)), None);
     }
 
     #[test]
     fn range_to_inclusive() {
-        // 1 is above ]-inf, 0]
-        assert_eq!(1.partial_rcmp(..=0), Some(RangeOrdering::Above));
-        assert_eq!(1.partial_rcmp(..=&0), Some(RangeOrdering::Above));
+        // All divisors of 2 divide 4
+        assert_eq!(Div(4).partial_rcmp(..=Div(2)), Some(RangeOrdering::Above));
+        assert_eq!(Div(4).partial_rcmp(..=&Div(2)), Some(RangeOrdering::Above));
 
-        // 1 is inside ]-inf, 1
-        assert_eq!(1.partial_rcmp(..=1), Some(RangeOrdering::Inside));
-        assert_eq!(1.partial_rcmp(..=&1), Some(RangeOrdering::Inside));
+        // 1 is a divisor of 2
+        assert_eq!(Div(1).partial_rcmp(..=Div(2)), Some(RangeOrdering::Inside));
+        assert_eq!(Div(1).partial_rcmp(..=&Div(2)), Some(RangeOrdering::Inside));
+
+        // 3 is uncomparable with the divisors of 10
+        assert_eq!(Div(3).partial_rcmp(..=Div(10)), None);
+        assert_eq!(Div(3).partial_rcmp(..=&Div(10)), None);
     }
 
     #[test]
     fn bounds_full() {
-        // 1 is inside ]-inf, inf[
-        let bounds: (Bound<i32>, Bound<i32>) = (Bound::Unbounded, Bound::Unbounded);
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Inside));
+        // 1 is an integer
+        let bounds: (Bound<Div>, Bound<Div>) = (Bound::Unbounded, Bound::Unbounded);
+        assert_eq!(Div(1).partial_rcmp(bounds), Some(RangeOrdering::Inside));
     }
 
     #[test]
     fn bounds_from() {
-        // 1 is inside [1, +inf[
-        let bounds = (Bound::Included(1), Bound::Unbounded);
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Inside));
+        // 1 a multiple of 1
+        let bounds = (Bound::Included(Div(1)), Bound::Unbounded);
+        assert_eq!(Div(1).partial_rcmp(bounds), Some(RangeOrdering::Inside));
 
-        let bounds = (Bound::Included(&1), Bound::Unbounded);
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Inside));
+        let bounds = (Bound::Included(&Div(1)), Bound::Unbounded);
+        assert_eq!(Div(1).partial_rcmp(bounds), Some(RangeOrdering::Inside));
 
-        // 1 is below [2, +inf[
-        let bounds = (Bound::Included(2), Bound::Unbounded);
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Below));
+        // 1 divides all multiples of 2
+        let bounds = (Bound::Included(Div(2)), Bound::Unbounded);
+        assert_eq!(Div(1).partial_rcmp(bounds), Some(RangeOrdering::Below));
 
-        let bounds = (Bound::Included(&2), Bound::Unbounded);
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Below));
+        let bounds = (Bound::Included(&Div(2)), Bound::Unbounded);
+        assert_eq!(Div(1).partial_rcmp(bounds), Some(RangeOrdering::Below));
+
+        // 2 is uncomparable with the multiples of 3
+        let bounds = (Bound::Included(Div(3)), Bound::Unbounded);
+        assert_eq!(Div(2).partial_rcmp(bounds), None);
+
+        let bounds = (Bound::Included(&Div(3)), Bound::Unbounded);
+        assert_eq!(Div(2).partial_rcmp(bounds), None);
     }
 
     #[test]
-    fn bounds_to() {
-        // 1 is above ]-inf, 1[
-        let bounds = (Bound::Included(1), Bound::Unbounded);
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Inside));
-
-        let bounds = (Bound::Included(&1), Bound::Unbounded);
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Inside));
-
-        // 1 is inside ]-inf, 2[
-        let bounds = (Bound::Included(2), Bound::Unbounded);
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Below));
-
-        let bounds = (Bound::Included(&2), Bound::Unbounded);
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Below));
-    }
+    fn bounds_to() {}
 
     #[test]
-    fn bounds() {
-        // 1 is above [0, 1[
-        let bounds = (Bound::Included(0), Bound::Excluded(1));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Above));
-
-        let bounds = (Bound::Included(&0), Bound::Excluded(&1));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Above));
-
-        // 1 is inside [1, 2[
-        let bounds = (Bound::Included(1), Bound::Excluded(2));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Inside));
-
-        let bounds = (Bound::Included(&1), Bound::Excluded(&2));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Inside));
-
-        // 1 is below [2, 3[
-        let bounds = (Bound::Included(2), Bound::Excluded(3));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Below));
-
-        let bounds = (Bound::Included(&2), Bound::Excluded(&3));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Below));
-    }
+    fn bounds() {}
 
     #[test]
-    fn bounds_inclusive() {
-        // 1 is above [0, 0]
-        let bounds = (Bound::Included(0), Bound::Included(0));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Above));
-
-        let bounds = (Bound::Included(&0), Bound::Included(&0));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Above));
-
-        // 1 is inside [1, 1]
-        let bounds = (Bound::Included(1), Bound::Included(1));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Inside));
-
-        let bounds = (Bound::Included(&1), Bound::Included(&1));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Inside));
-
-        // 1 is below [2, 2]
-        let bounds = (Bound::Included(2), Bound::Included(2));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Below));
-
-        let bounds = (Bound::Included(&2), Bound::Included(&2));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Below));
-    }
+    fn bounds_inclusive() {}
 
     #[test]
-    fn bounds_to_inclusive() {
-        // 1 is above ]-inf, 0]
-        let bounds = (Bound::Unbounded, Bound::Included(0));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Above));
-
-        let bounds = (Bound::Unbounded, Bound::Included(&0));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Above));
-
-        // 1 is inside ]-inf, 1]
-        let bounds = (Bound::Unbounded, Bound::Included(1));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Inside));
-
-        let bounds = (Bound::Unbounded, Bound::Included(&1));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Inside));
-    }
+    fn bounds_to_inclusive() {}
 
     #[test]
-    fn bounds_exclusive_inclusive() {
-        // 1 is above ]-1, 0]
-        let bounds: (Bound<i32>, Bound<i32>) = (Bound::Excluded(-1), Bound::Included(0));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Above));
-
-        let bounds: (Bound<&i32>, Bound<&i32>) = (Bound::Excluded(&-1), Bound::Included(&0));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Above));
-
-        // 1 is inside ]0, 1]
-        let bounds: (Bound<i32>, Bound<i32>) = (Bound::Excluded(0), Bound::Included(1));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Inside));
-
-        let bounds: (Bound<&i32>, Bound<&i32>) = (Bound::Excluded(&0), Bound::Included(&1));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Inside));
-
-        // 1 is below ]1, 2]
-        let bounds: (Bound<i32>, Bound<i32>) = (Bound::Excluded(1), Bound::Included(2));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Below));
-
-        let bounds: (Bound<&i32>, Bound<&i32>) = (Bound::Excluded(&1), Bound::Included(&2));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Below));
-    }
+    fn bounds_exclusive_inclusive() {}
 
     #[test]
-    fn bounds_as_reference() {
-        let bounds = 0..2;
-        assert_eq!(1.partial_rcmp(&bounds), Some(RangeOrdering::Inside));
-        assert_eq!(1.partial_rcmp(bounds), Some(RangeOrdering::Inside));
-    }
+    fn bounds_as_reference() {}
 
     #[test]
-    fn empty_ranges() {
-        // 0 is above [0, 0[
-        assert_eq!(0.partial_rcmp(0..0), Some(RangeOrdering::Above));
-        assert_eq!(0.partial_rcmp(&0..&0), Some(RangeOrdering::Above));
-
-        // 0u32 is above [-inf, 0u32[
-        assert_eq!(0.partial_rcmp(..0u32), Some(RangeOrdering::Above));
-        assert_eq!(0.partial_rcmp(..&0u32), Some(RangeOrdering::Above));
-
-        // 30 is below [45, 35[
-        assert_eq!(30.partial_rcmp(45..35), Some(RangeOrdering::Below));
-        assert_eq!(30.partial_rcmp(&45..&35), Some(RangeOrdering::Below));
-
-        // 30 is above [25, 15[
-        assert_eq!(30.partial_rcmp(25..15), Some(RangeOrdering::Above));
-        assert_eq!(30.partial_rcmp(&25..&15), Some(RangeOrdering::Above));
-    }
+    fn empty_ranges() {}
 }

@@ -14,7 +14,7 @@
 [actions-badge]: https://github.com/Akvize/range-cmp/actions/workflows/ci.yml/badge.svg
 [actions-url]: https://github.com/Akvize/range-cmp/actions/workflows/ci.yml
 
-[Docs](https://docs.rs/reconcile/latest/range-cmp/)
+[Docs](https://docs.rs/range-cmp/latest/range_cmp/)
 
 This Rust crate provides the `RangeComparable` trait on all types that
 implement `Ord`. This traits exposes a `rcmp` associated method

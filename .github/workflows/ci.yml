@@ -1,4 +1,4 @@
-name: Rust API Template - CI
+name: CI
 
 on:
   push:
@@ -14,7 +14,7 @@ env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -Dwarnings
   RUSTDOCFLAGS: -Dwarnings
-  IMAGE_NAME: rust-api-template
+  IMAGE_NAME: range-cmp
 
 jobs:
   lint-and-test:
